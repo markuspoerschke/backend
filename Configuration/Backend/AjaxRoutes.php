@@ -174,6 +174,7 @@ return [
     'login_refresh' => [
         'path' => '/login/refresh',
         'target' => \TYPO3\CMS\Backend\Controller\AjaxLoginController::class . '::refreshAction',
+        'access' => 'public'
     ],
 
     // Check if backend session has timed out

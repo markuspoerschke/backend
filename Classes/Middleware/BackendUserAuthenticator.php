@@ -36,6 +36,8 @@ class BackendUserAuthenticator implements MiddlewareInterface
     /**
      * List of requests that don't need a valid BE user
      *
+     * @deprecated Will be removed in TYPO3 v10. Use "access" option to mark routes as public instead.
+     *
      * @var array
      */
     protected $publicRoutes = [
@@ -58,11 +60,9 @@ class BackendUserAuthenticator implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $pathToRoute = $request->getAttribute('routePath', '/login');
-
         Bootstrap::initializeBackendUser();
         // @todo: once this logic is in this method, the redirect URL should be handled as response here
-        Bootstrap::initializeBackendAuthentication($this->isLoggedInBackendUserRequired($pathToRoute));
+        Bootstrap::initializeBackendAuthentication($this->isLoggedInBackendUserRequired($request));
         Bootstrap::initializeLanguageObject();
         // Register the backend user as aspect
         $this->setBackendUserAspect(GeneralUtility::makeInstance(Context::class), $GLOBALS['BE_USER']);
@@ -74,12 +74,31 @@ class BackendUserAuthenticator implements MiddlewareInterface
      * Check if the user is required for the request
      * If we're trying to do a login or an ajax login, don't require a user
      *
-     * @param string $routePath the Route path to check against, something like '
+     * ATTENTION:
+     * The name of this method indicates that true will be returned, if a logged in user is required.
+     * BUT, this method will check for public routes. That means:
+     * - true is returned, if the user does not need to be logged in and the route can be accessed publicly
+     * - false is returned, if a logged in user is required and the route is not accessible publicly
+     *
+     * @deprecated Will be removed in TYPO3 v10.
+     *
+     * @param ServerRequestInterface $request
      * @return bool whether the request can proceed without a login required
      */
-    protected function isLoggedInBackendUserRequired(string $routePath): bool
+    protected function isLoggedInBackendUserRequired(ServerRequestInterface $request): bool
     {
-        return in_array($routePath, $this->publicRoutes, true);
+        if ($request->getAttribute('public', false)) {
+            return true;
+        }
+
+        // fallback in case, that this class is overwritten using XCLASS
+        $routePath = $request->getAttribute('routePath', '/login');
+        if (in_array($routePath, $this->publicRoutes, true)) {
+            trigger_error('The property $publicRoutes will be removed in TYPO3 v10. Use the "access" option instead to mark routes as public.', E_USER_DEPRECATED);
+            return true;
+        }
+
+        return false;
     }
 
     /**

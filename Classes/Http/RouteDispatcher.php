@@ -43,10 +43,8 @@ class RouteDispatcher extends Dispatcher
      */
     public function dispatch(ServerRequestInterface $request, ResponseInterface $response = null): ResponseInterface
     {
-        $router = GeneralUtility::makeInstance(Router::class);
-        $route = $router->matchRequest($request);
-        $request = $request->withAttribute('route', $route);
-        $request = $request->withAttribute('target', $route->getOption('target'));
+        $route = $request->getAttribute('route');
+
         if (!$this->isValidRequest($request)) {
             throw new InvalidRequestTokenException('Invalid request for route "' . $route->getPath() . '"', 1425389455);
         }
@@ -109,7 +107,7 @@ class RouteDispatcher extends Dispatcher
     protected function isValidRequest($request)
     {
         $route = $request->getAttribute('route');
-        if ($route->getOption('access') === 'public') {
+        if ($request->getAttribute('public', false)) {
             return true;
         }
         $token = (string)($request->getParsedBody()['token'] ?? $request->getQueryParams()['token']);

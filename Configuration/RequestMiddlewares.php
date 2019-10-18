@@ -34,6 +34,15 @@ return [
                 'typo3/cms-backend/https-redirector'
             ]
         ],
+        'typo3/cms-backend/backend-route-matcher' => [
+            'target' => \TYPO3\CMS\Backend\Middleware\BackendRouteMatcher::class,
+            'before' => [
+                'typo3/cms-backend/authentication',
+            ],
+            'after' => [
+                'typo3/cms-backend/backend-routing',
+            ]
+        ],
         'typo3/cms-backend/authentication' => [
             'target' => \TYPO3\CMS\Backend\Middleware\BackendUserAuthenticator::class,
             'after' => [
